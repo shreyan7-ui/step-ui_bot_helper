@@ -1,0 +1,27 @@
+[
+  {
+    "inputValue": "Red leather shoes",
+    "shouldFail": false,
+    "description": "Valid input well under the 30 character limit"
+  },
+  {
+    "inputValue": "123456789012345678901234567890",
+    "shouldFail": false,
+    "description": "Exact boundary limit of 30 characters"
+  },
+  {
+    "inputValue": "1234567890123456789012345678901",
+    "shouldFail": true,
+    "description": "Overflow limit with 31 characters"
+  },
+  {
+    "inputValue": "",
+    "shouldFail": false,
+    "description": "Empty string input"
+  },
+  {
+    "inputValue": "<script>alert(1)</script>",
+    "shouldFail": true,
+    "description": "Basic XSS script injection attempt within length limit"
+  }
+]

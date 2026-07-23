@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "IQP Automation DOM Scanner",
+  "version": "1.0",
+  "description": "Scans DOM input fields, maps attributes, and coordinates with Python AI test generator.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
