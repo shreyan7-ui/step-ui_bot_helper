@@ -2,17 +2,28 @@ import os
 import json
 import re
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+
+try:
+    from openai import AzureOpenAI
+except ImportError as exc:
+    raise ImportError("openai package is required. Install with: pip install openai") from exc
 
 # 1. Load .env file from the root ADV folder (one directory up from bot/)
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-api_key = os.getenv("api_key")
-if not api_key:
-    raise ValueError("❌ GEMINI_API_KEY missing! Add it to your .env file.")
+api_key = os.getenv("AZURE_OPENAI_API_KEY")
+azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT", "https://apim-adusa-coregenai-prde201.azure-api.net")
+api_version = os.getenv("OPENAI_API_VERSION", "2024-06-01")
+deployment_name = os.getenv("AZURE_DEPLOYMENT_NAME", "gpt-4o")
 
-client = genai.Client(api_key=api_key)
+if not api_key:
+    raise ValueError("AZURE_OPENAI_API_KEY missing! Add it to your .env file.")
+
+client = AzureOpenAI(
+    api_key=api_key,
+    azure_endpoint=azure_endpoint,
+    api_version=api_version,
+)
 
 def clean_json_string(text: str) -> str:
     """Removes markdown code blocks and trailing commas that break json.loads."""
@@ -43,17 +54,20 @@ def generate_test_data(instruction: str, output_filename="test_data.json"):
     """
 
     try:
-        response = client.models.generate_content(
-            model='gemini-3.5-flash',
-            contents=instruction,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                response_mime_type="application/json",
-                temperature=0.1  # Low temperature prevents syntax drift
-            )
+        response = client.chat.completions.create(
+            model=deployment_name,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": instruction}
+            ],
+            temperature=0.1
         )
 
-        raw_text = clean_json_string(response.text)
+        content = response.choices[0].message.content if response.choices else ""
+        if not content:
+            raise ValueError("Empty response from Azure OpenAI")
+
+        raw_text = clean_json_string(content)
         data = json.loads(raw_text)
 
         if isinstance(data, dict):
